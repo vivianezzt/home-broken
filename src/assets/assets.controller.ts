@@ -19,7 +19,7 @@ export class AssetsController {
 
   @Get(':symbol')
   findOne(@Param('symbol') symbol: string) {
-    return this.assetsService.findOne(+symbol);
+    return this.assetsService.findOne(symbol); // Removido o + antes do symbol
   }
 
   // @Patch(':id')

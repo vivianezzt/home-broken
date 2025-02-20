@@ -25,7 +25,7 @@ export class WalletsService {
   }
 
   createWalletAsset(data: {wallet: string, asset: string, shares: number}) {
-    return this.walletSchema.create({
+    return this.walletAssetSchema.create({
       wallet: data.wallet,
       asset: data.asset,
       shares: data.shares

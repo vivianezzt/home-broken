@@ -16,7 +16,7 @@ export class AssetsService {
     return this.assetSchema.find();;
   }
 
-  findOne(symbol: number) {
+  findOne(symbol: string) {
     return this.assetSchema.findOne({symbol});
   }
 
