@@ -61,9 +61,9 @@ describe('WalletsController', () => {
       const body = { assetId: '456', shares: 10 };
       await controller.createWalletAsset(id, body);
       expect(service.createWalletAsset).toHaveBeenCalledWith({
-        assetId: body.assetId,
+        asset: body.assetId,
         shares: body.shares,
-        walletId: id,
+        wallet: id,
       });
     });
   });

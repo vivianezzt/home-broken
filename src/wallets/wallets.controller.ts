@@ -36,13 +36,10 @@ export class WalletsController {
   }
 
   @Post(':id/assets')
-  createWalletAsset(
-    @Param('id') id: string,
-    @Body() body: { assetId: string; shares: number },
-  ) {
+  createWalletAsset(@Param('id') id: string, @Body() body: { assetId: string; shares: number }) {
     return this.walletsService.createWalletAsset({
-      walletId: id,
-      assetId: body.assetId,
+      wallet: id, // Corrigido para 'wallet'
+      asset: body.assetId, // Corrigido para 'asset'
       shares: body.shares,
     });
   }

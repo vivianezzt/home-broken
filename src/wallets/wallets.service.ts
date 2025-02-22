@@ -35,19 +35,15 @@ export class WalletsService {
     >;
   }
 
-  async createWalletAsset(data: {
-    walletId: string;
-    assetId: string;
-    shares: number;
-  }) {
+  async createWalletAsset(data: { wallet: string; asset: string; shares: number }) {
     const session = await this.connection.startSession();
     await session.startTransaction();
     try {
       const docs = await this.walletAssetSchema.create(
         [
           {
-            wallet: data.walletId,
-            asset: data.assetId,
+            wallet: data.wallet,
+            asset: data.asset,
             shares: data.shares,
           },
         ],
@@ -55,13 +51,9 @@ export class WalletsService {
       );
       const walletAsset = docs[0];
       await this.walletSchema.updateOne(
-        { _id: data.walletId },
-        {
-          $push: { assets: new mongoose.Types.ObjectId(walletAsset._id) },
-        },
-        {
-          session,
-        },
+        { _id: data.wallet },
+        { $push: { assets: new mongoose.Types.ObjectId(walletAsset._id) } }, // Correção aqui
+        { session },
       );
       await session.commitTransaction();
       return walletAsset;
