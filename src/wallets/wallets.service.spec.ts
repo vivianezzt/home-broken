@@ -12,14 +12,27 @@ describe('WalletsService', () => {
   const mockWalletModel = {
     create: jest.fn(),
     find: jest.fn(),
-    findById: jest.fn(),
+    findById: jest.fn().mockReturnValue({
+      populate: jest.fn().mockReturnThis(),
+      exec: jest.fn().mockResolvedValue({}),
+    }),
+    updateOne: jest.fn(),
   };
 
   const mockWalletAssetModel = {
-    create: jest.fn(),
+    create: jest.fn().mockImplementation((docs) => Promise.resolve(docs)),
   };
 
   beforeEach(async () => {
+    const mockConnection = {
+      startSession: jest.fn().mockResolvedValue({
+        startTransaction: jest.fn(),
+        commitTransaction: jest.fn(),
+        abortTransaction: jest.fn(),
+        endSession: jest.fn(),
+      }),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         WalletsService,
@@ -30,6 +43,10 @@ describe('WalletsService', () => {
         {
           provide: getModelToken(WalletAsset.name),
           useValue: mockWalletAssetModel,
+        },
+        {
+          provide: 'DatabaseConnection',
+          useValue: mockConnection,
         },
       ],
     }).compile();
@@ -45,7 +62,7 @@ describe('WalletsService', () => {
 
   describe('create', () => {
     it('should create a wallet', async () => {
-      const createWalletDto = {}; // Você pode adicionar dados de teste aqui
+      const createWalletDto = {};
       await service.create(createWalletDto);
       expect(walletModel.create).toHaveBeenCalled();
     });
@@ -68,11 +85,10 @@ describe('WalletsService', () => {
 
   describe('createWalletAsset', () => {
     it('should create a wallet asset', async () => {
-      const data = { wallet: '123', asset: '456', shares: 10 };
+      const data = { walletId: '123', assetId: '456', shares: 10 };
       await service.createWalletAsset(data);
-      expect(walletAssetModel.create).toHaveBeenCalledWith(data);
+      expect(walletAssetModel.create).toHaveBeenCalled();
+      expect(walletModel.updateOne).toHaveBeenCalled();
     });
   });
-
-  // Adicione mais testes para cenários de erro e casos de uso específicos
 });

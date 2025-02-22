@@ -1,36 +1,79 @@
-
 import { Injectable } from '@nestjs/common';
 import { CreateWalletDto } from './dto/create-wallet.dto';
-import { InjectModel } from '@nestjs/mongoose';
 import { Wallet } from './entities/wallet.entity';
-import { Model } from 'mongoose';
+import { InjectConnection, InjectModel } from '@nestjs/mongoose';
+import mongoose, { Model } from 'mongoose';
+import { Asset } from '../assets/entities/asset.entity';
 import { WalletAsset } from './entities/wallet-assets.entity';
 // import { UpdateWalletDto } from './dto/update-wallet.dto';
 
 @Injectable()
 export class WalletsService {
-  constructor(@InjectModel(Wallet.name) private walletSchema: Model<Wallet>,
-  @InjectModel(WalletAsset.name) private walletAssetSchema: Model<WalletAsset>) {}
+  constructor(
+    @InjectModel(Wallet.name) private walletSchema: Model<Wallet>,
+    @InjectModel(WalletAsset.name)
+    private walletAssetSchema: Model<WalletAsset>,
+    @InjectConnection() private connection: mongoose.Connection,
+  ) {}
 
-  async create(createWalletDto: CreateWalletDto): Promise<Wallet> {
+  create(createWalletDto: CreateWalletDto) {
     return this.walletSchema.create(createWalletDto);
   }
 
-  async findAll(): Promise<Wallet[]> {
+  findAll() {
     return this.walletSchema.find();
   }
 
-  async findOne(id: string): Promise<Wallet | null> {
-    return this.walletSchema.findById(id);
+  findOne(id: string) {
+    return this.walletSchema.findById(id).populate([
+      {
+        path: 'assets', //walletasset
+        populate: ['asset'],
+      },
+    ]) as Promise<
+      (Wallet & { assets: (WalletAsset & { asset: Asset })[] }) | null
+    >;
   }
 
-  createWalletAsset(data: {wallet: string, asset: string, shares: number}) {
-    return this.walletAssetSchema.create({
-      wallet: data.wallet,
-      asset: data.asset,
-      shares: data.shares
-    });
+  async createWalletAsset(data: {
+    walletId: string;
+    assetId: string;
+    shares: number;
+  }) {
+    const session = await this.connection.startSession();
+    await session.startTransaction();
+    try {
+      const docs = await this.walletAssetSchema.create(
+        [
+          {
+            wallet: data.walletId,
+            asset: data.assetId,
+            shares: data.shares,
+          },
+        ],
+        { session },
+      );
+      const walletAsset = docs[0];
+      await this.walletSchema.updateOne(
+        { _id: data.walletId },
+        {
+          $push: { assets: new mongoose.Types.ObjectId(walletAsset._id) },
+        },
+        {
+          session,
+        },
+      );
+      await session.commitTransaction();
+      return walletAsset;
+    } catch (e) {
+      console.error(e);
+      await session.abortTransaction();
+      throw e;
+    } finally {
+      await session.endSession();
+    }
   }
+}
    // update(id: number, updateWalletDto: UpdateWalletDto) {
   //   return `This action updates a #${id} wallet`;
   // }
@@ -38,4 +81,3 @@ export class WalletsService {
   // remove(id: number) {
   //   return `This action removes a #${id} wallet`;
   // }
-}
