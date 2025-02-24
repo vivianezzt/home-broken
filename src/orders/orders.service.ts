@@ -24,10 +24,12 @@ export class OrderService {
 
     findAll(filter: { walletId: string }) {
         return this.orderSchema.find({ walletId: filter.walletId });
+        //.populate(['asset', 'trade'])
     }
 
     findOne(id: string) {
         return this.orderSchema.findById(id);
+        //.populate(['asset', 'trade'])
     }
    // update(id: number, updateOrdeDto: UpdateOrdeDto) {
   //   return `This action updates a #${id} orde`;
