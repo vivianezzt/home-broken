@@ -85,7 +85,7 @@ describe('WalletsService', () => {
 
   describe('createWalletAsset', () => {
     it('should create a wallet asset', async () => {
-      const data = { wallet: '123', asset: '456', shares: 10 };
+      const data = { walletId: '123', assetId: '456', shares: 10 };
       await service.createWalletAsset(data);
       expect(walletAssetModel.create).toHaveBeenCalled();
       expect(walletModel.updateOne).toHaveBeenCalled();

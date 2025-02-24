@@ -5,7 +5,6 @@ import { InjectConnection, InjectModel } from '@nestjs/mongoose';
 import mongoose, { Model } from 'mongoose';
 import { Asset } from '../assets/entities/asset.entity';
 import { WalletAsset } from './entities/wallet-assets.entity';
-// import { UpdateWalletDto } from './dto/update-wallet.dto';
 
 @Injectable()
 export class WalletsService {
@@ -35,15 +34,19 @@ export class WalletsService {
     >;
   }
 
-  async createWalletAsset(data: { wallet: string; asset: string; shares: number }) {
+  async createWalletAsset(data: {
+    walletId: string;
+    assetId: string;
+    shares: number;
+  }) {
     const session = await this.connection.startSession();
     await session.startTransaction();
     try {
       const docs = await this.walletAssetSchema.create(
         [
           {
-            wallet: data.wallet,
-            asset: data.asset,
+            wallet: data.walletId,
+            asset: data.assetId,
             shares: data.shares,
           },
         ],
@@ -51,9 +54,13 @@ export class WalletsService {
       );
       const walletAsset = docs[0];
       await this.walletSchema.updateOne(
-        { _id: data.wallet },
-        { $push: { assets: new mongoose.Types.ObjectId(walletAsset._id) } }, // Correção aqui
-        { session },
+        { _id: data.walletId },
+        {
+          $push: { assets: walletAsset._id },
+        },
+        {
+          session,
+        },
       );
       await session.commitTransaction();
       return walletAsset;
@@ -66,6 +73,7 @@ export class WalletsService {
     }
   }
 }
+
    // update(id: number, updateWalletDto: UpdateWalletDto) {
   //   return `This action updates a #${id} wallet`;
   // }
